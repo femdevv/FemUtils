@@ -1,7 +1,9 @@
 package xyz.femdev.femutils.java.config;
 
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -28,7 +30,18 @@ public final class ReflectMapper {
         TypeSerializer<T> ser = registry.find(type);
         if (ser != null) return ser.deserialize(raw, this, type);
 
-        if (type.isRecord()) return fromRecord(raw, type);
+        if (List.class.isAssignableFrom(type)) {
+            //noinspection unchecked
+            return (T) list(raw, Object.class);
+        }
+        if (Map.class.isAssignableFrom(type)) {
+            //noinspection unchecked
+            return (T) map(raw, Object.class, Object.class);
+        }
+
+        if (type.isRecord()) {
+            return fromRecord(raw, type);
+        }
         return fromPojo(raw, type);
     }
 
@@ -55,11 +68,40 @@ public final class ReflectMapper {
         Object[] args = new Object[comps.length];
         for (int i = 0; i < comps.length; i++) {
             var rc = comps[i];
-            args[i] = toObject(map.get(rc.getName()), rc.getType());
+            Object rawVal = map.get(rc.getName());
+            Class<?> compType = rc.getType();
+            Object converted;
+
+            if (List.class.isAssignableFrom(compType)) {
+                Type generic = rc.getGenericType();
+                Class<?> elemType = Object.class;
+                if (generic instanceof ParameterizedType pt) {
+                    Type arg = pt.getActualTypeArguments()[0];
+                    if (arg instanceof Class<?> c) elemType = c;
+                }
+                converted = list(rawVal, elemType);
+
+            } else if (Map.class.isAssignableFrom(compType)) {
+                Type generic = rc.getGenericType();
+                Class<?> keyType = Object.class, valType = Object.class;
+                if (generic instanceof ParameterizedType pt) {
+                    Type[] args0 = pt.getActualTypeArguments();
+                    if (args0[0] instanceof Class<?> ck) keyType = ck;
+                    if (args0[1] instanceof Class<?> cv) valType = cv;
+                }
+                converted = map(rawVal, keyType, valType);
+
+            } else {
+                converted = toObject(rawVal, compType);
+            }
+
+            args[i] = converted;
         }
 
         try {
-            var ctor = type.getDeclaredConstructor(Arrays.stream(comps).map(RecordComponent::getType).toArray(Class[]::new));
+            var ctor = type.getDeclaredConstructor(
+                    Arrays.stream(comps).map(RecordComponent::getType).toArray(Class[]::new)
+            );
             ctor.setAccessible(true);
             return ctor.newInstance(args);
         } catch (ReflectiveOperationException e) {
