@@ -38,12 +38,12 @@ Currently, FemUtils is not available on a public Maven repository. To use it:
 
 FemUtils is split into separate modules for clarity and flexibility:
 
-| Module                        | Description                                           |
-| ----------------------------- | ----------------------------------------------------- |
-| `java`                        | General Java utilities                                |
-| `paper`                       | Paper-specific tools like commands, GUIs, configs     |
-| `compatibility-layer` *(WIP)* | Low-level NMS helper utilities (coming soon)          |
-| `demo-plugin`                 | An example plugin that uses our utilities             |
+| Module                        | Description                                       |
+|-------------------------------|---------------------------------------------------|
+| `java`                        | General Java utilities                            |
+| `paper`                       | Paper-specific tools like commands, GUIs, configs |
+| `compatibility-layer` *(WIP)* | Low-level NMS helper utilities (coming soon)      |
+| `demo-plugin`                 | An example plugin that uses our utilities         |
 
 More modules may be added in the future, but for now, Paper is the main focus.
 
