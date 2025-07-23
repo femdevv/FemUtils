@@ -1,0 +1,9 @@
+name: FemUtilsDemo
+main: xyz.femdev.femutils.demo.DemoPlugin
+version: 1.0
+api-version: 1.21
+commands:
+  demo:
+    description: Demo root command
+    usage: /demo
+    aliases: [ femdemo ]
