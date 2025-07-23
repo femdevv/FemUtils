@@ -35,11 +35,11 @@ public final class AnvilPrompt {
     /**
      * Opens the anvil input GUI for a player.
      *
-     * @param player     the player to prompt
-     * @param title      GUI title
+     * @param player      the player to prompt
+     * @param title       GUI title
      * @param initialText text to pre-fill
-     * @param onComplete called with the input string
-     * @param onCancel   called if the GUI is closed without input
+     * @param onComplete  called with the input string
+     * @param onCancel    called if the GUI is closed without input
      */
     public void open(Player player, Component title, String initialText, Consumer<String> onComplete, Runnable onCancel) {
         Location loc = player.getLocation();

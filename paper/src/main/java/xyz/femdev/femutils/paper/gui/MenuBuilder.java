@@ -16,8 +16,10 @@ public final class MenuBuilder {
     private final Map<Integer, Button> buttons = new HashMap<>();
     private Component title = Component.text("Menu");
     private int rows = 3;
-    private Consumer<Player> onClose = p -> {};
-    private BiConsumer<Player, Menu> dynamicBuilder = (p, m) -> {};
+    private Consumer<Player> onClose = p -> {
+    };
+    private BiConsumer<Player, Menu> dynamicBuilder = (p, m) -> {
+    };
 
     private MenuBuilder() {
     }
