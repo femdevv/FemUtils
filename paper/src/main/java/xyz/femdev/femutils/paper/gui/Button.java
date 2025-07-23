@@ -27,7 +27,8 @@ public final class Button {
      * Creates a button that does nothing when clicked.
      */
     public static Button noop(ItemStack item) {
-        return new Button(item, ctx -> {});
+        return new Button(item, ctx -> {
+        });
     }
 
     public ItemStack item() {
