@@ -8,6 +8,7 @@ import xyz.femdev.femutils.java.core.Result;
 import xyz.femdev.femutils.java.time.TimeParser;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -61,6 +62,20 @@ public final class BuiltinParsers {
         } catch (NumberFormatException e) {
             return Result.err("Invalid coords");
         }
+    };
+
+    public static final ArgParser<Boolean> BOOL = (s, ctx) -> {
+        String l = s.toLowerCase(Locale.ROOT);
+        if (l.equals("true") || l.equals("yes")) return Result.ok(true);
+        if (l.equals("false") || l.equals("no")) return Result.ok(false);
+        return Result.err("Not a boolean: " + s);
+    };
+
+    public static final ArgParser<Player> ONLINE_PLAYER = (s, ctx) -> {
+        Player p = Bukkit.getPlayerExact(s);
+        return p == null
+                ? Result.err("Player not online: " + s)
+                : Result.ok(p);
     };
 
     private BuiltinParsers() {
