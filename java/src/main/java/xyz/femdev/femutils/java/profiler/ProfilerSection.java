@@ -2,7 +2,6 @@ package xyz.femdev.femutils.java.profiler;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
 
 /**
@@ -50,12 +49,16 @@ public final class ProfilerSection implements AutoCloseable {
         Profiler.pop(this);
     }
 
-    /** @return section name */
+    /**
+     * @return section name
+     */
     public String getName() {
         return name;
     }
 
-    /** @return elapsed time in nanoseconds */
+    /**
+     * @return elapsed time in nanoseconds
+     */
     public long getElapsedNanos() {
         if (!closed) {
             throw new IllegalStateException("Section has not been closed yet");
@@ -63,12 +66,16 @@ public final class ProfilerSection implements AutoCloseable {
         return endTime - startTime;
     }
 
-    /** @return unmodifiable view of children */
+    /**
+     * @return unmodifiable view of children
+     */
     public List<ProfilerSection> getChildren() {
         return Collections.unmodifiableList(children);
     }
 
-    /** @return parent section, or null if root */
+    /**
+     * @return parent section, or null if root
+     */
     public ProfilerSection getParent() {
         return parent;
     }

@@ -15,7 +15,8 @@ import java.util.concurrent.ConcurrentMap;
  * </p>
  */
 public final class Profiler {
-    private Profiler() {}
+    private Profiler() {
+    }
 
     // stack of active ProfilerSection instances
     private static final ThreadLocal<Deque<ProfilerSection>> STACK = ThreadLocal.withInitial(ArrayDeque::new);
