@@ -12,6 +12,7 @@ import xyz.femdev.femutils.demo.DemoConfig;
 import xyz.femdev.femutils.java.config.ConfigHandle;
 import xyz.femdev.femutils.java.module.Module;
 import xyz.femdev.femutils.java.module.ModuleContext;
+import xyz.femdev.femutils.java.profiler.*;
 import xyz.femdev.femutils.paper.command.Argument;
 import xyz.femdev.femutils.paper.command.BuiltinParsers;
 import xyz.femdev.femutils.paper.command.CommandNode;
@@ -22,10 +23,13 @@ import xyz.femdev.femutils.paper.events.Events;
 import xyz.femdev.femutils.paper.gui.*;
 import xyz.femdev.femutils.paper.gui.input.AnvilPrompt;
 import xyz.femdev.femutils.paper.item.ItemBuilder;
+import xyz.femdev.femutils.paper.profiler.PaperProfilerRenderer;
 import xyz.femdev.femutils.paper.tasks.TaskChain;
 import xyz.femdev.femutils.paper.tasks.Tasks;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
@@ -77,7 +81,6 @@ public class DemoModule implements Module {
 
     @Override
     public void stop() {
-        // Clean up any active subscriptions
         for (EventSubscription<?> sub : quitSubs.values()) {
             sub.unsubscribe();
         }
@@ -341,6 +344,107 @@ public class DemoModule implements Module {
                 })
                 .build();
 
+        CommandNode profilerDemo = CommandNode.literal("profiler")
+                .playerOnly()
+                .exec(ctx -> {
+                    Player p = ctx.player();
+                    p.sendMessage(MM.deserialize("<gray>Starting profiler demo..."));
+
+                    try (ProfilerSection root = Profiler.start("demo-root")) {
+                        Thread.sleep(50);
+
+                        try (ProfilerSection nested = Profiler.start("nested-task")) {
+                            Thread.sleep(20);
+                        }
+
+                        try (ProfilerSection another = Profiler.start("another-task")) {
+                            Thread.sleep(30);
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        p.sendMessage(MM.deserialize("<red>Profiler demo interrupted."));
+                        return;
+                    }
+
+                    for (ProfilerSection section : Profiler.getRootsForCurrentThread()) {
+                        p.sendMessage(MM.deserialize("<gold>" + section.getName() + ": "
+                                + String.format("%.3f ms", section.getElapsedNanos() / 1_000_000.0)));
+                        for (ProfilerSection child : section.getChildren()) {
+                            p.sendMessage(MM.deserialize("  <yellow>" + child.getName() + ": "
+                                    + String.format("%.3f ms", child.getElapsedNanos() / 1_000_000.0)));
+                        }
+                    }
+
+                    Profiler.reset();
+                    p.sendMessage(MM.deserialize("<green>Profiler demo complete."));
+                })
+                .build();
+
+        CommandNode reportDemo = CommandNode.literal("profilereport")
+                .playerOnly()
+                .exec(ctx -> {
+                    Player p = ctx.player();
+                    p.sendMessage(MM.deserialize("<gray>Running profiler & generating report...>"));
+
+                    Profiler.reset();
+                    try (var root = Profiler.start("report-root")) {
+                        Thread.sleep(30);
+                        try (var child = Profiler.start("child-step")) {
+                            Thread.sleep(20);
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        p.sendMessage(MM.deserialize("<red>Interrupted during profiling demo."));
+                        return;
+                    }
+
+                    ProfilerReport report = ProfilerReport.capture();
+                    new ConsoleProfilerRenderer().render(report, System.out);
+                    Path outFile = plugin.getDataFolder().toPath().resolve("demo-profile-report.json");
+                    try {
+                        Files.createDirectories(outFile.getParent());
+                        ProfilerExporters.toJsonFile(report, outFile);
+                        p.sendMessage(MM.deserialize("<green>Report written to <yellow>" + outFile.toString()));
+                    } catch (IOException ioe) {
+                        p.sendMessage(MM.deserialize("<red>Failed to write report: " + ioe.getMessage()));
+                        plugin.getLogger().severe("Error writing profile report: " + ioe);
+                    }
+
+                    p.sendMessage(MM.deserialize("<gold>-- Profiler Summary --"));
+                    for (var section : report.roots()) {
+                        double ms = section.elapsedNanos() / 1_000_000.0;
+                        p.sendMessage(MM.deserialize("<yellow>" + section.name() + ": " + String.format("%.3f ms", ms)));
+                        for (var child : section.children()) {
+                            double cms = child.elapsedNanos() / 1_000_000.0;
+                            p.sendMessage(MM.deserialize("  <aqua>" + child.name() + ": " + String.format("%.3f ms", cms)));
+                        }
+                    }
+                })
+                .build();
+
+        CommandNode paperDemo = CommandNode.literal("profilerpaper")
+                .playerOnly()
+                .exec(ctx -> {
+                    Player p = ctx.player();
+                    p.sendMessage(MM.deserialize("<gray>Starting Paper profiler demo...</gray>"));
+
+                    Profiler.reset();
+                    try (var root = Profiler.start("tick-root")) {
+                        Thread.sleep(25);
+                        try (var child = Profiler.start("tick-child")) {
+                            Thread.sleep(15);
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        p.sendMessage(MM.deserialize("<red>Interrupted!</red>"));
+                        return;
+                    }
+
+                    ProfilerReport report = ProfilerReport.capture();
+                    new PaperProfilerRenderer(p, "<gray>[Profiler]<reset> ").render(report);
+                })
+                .build();
+
         CommandNode root = CommandNode.literal("demo")
                 .child(reload)
                 .child(ping)
@@ -354,6 +458,9 @@ public class DemoModule implements Module {
                 .child(paginatorCmd)
                 .child(animCmd)
                 .child(anvilCmd)
+                .child(profilerDemo)
+                .child(reportDemo)
+                .child(paperDemo)
                 .build();
 
         commands.registerRoot("demo", root);
