@@ -1,4 +1,3 @@
-// File: xyz/femdev/femutils/paper/profiler/PaperProfilerRenderer.java
 package xyz.femdev.femutils.paper.profiler;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -21,7 +20,7 @@ public class PaperProfilerRenderer {
 
     /**
      * @param sender the recipient (player or console)
-     * @param prefix a chat‐prefix for each line (e.g. "&7[Profiler]&r ")
+     * @param prefix a chat‐prefix for each line
      */
     public PaperProfilerRenderer(CommandSender sender, String prefix) {
         this.sender = sender;

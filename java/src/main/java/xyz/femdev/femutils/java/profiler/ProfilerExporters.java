@@ -15,7 +15,8 @@ public final class ProfilerExporters {
             .setPrettyPrinting()
             .create();
 
-    private ProfilerExporters() {}
+    private ProfilerExporters() {
+    }
 
     /**
      * Serialize a ProfilerReport to a JSON string.

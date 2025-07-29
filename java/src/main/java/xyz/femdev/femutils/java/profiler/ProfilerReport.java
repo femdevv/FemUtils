@@ -7,7 +7,7 @@ import java.util.List;
  * Immutable snapshot of profiling data at a point in time.
  *
  * @param timestamp epoch milliseconds when the snapshot was taken
- * @param roots list of root sections
+ * @param roots     list of root sections
  */
 public record ProfilerReport(long timestamp, List<ProfilerReportSection> roots) {
 

@@ -5,9 +5,9 @@ import java.util.List;
 /**
  * Data Transfer Object representing a single section in a ProfilerReport.
  *
- * @param name the section name
+ * @param name         the section name
  * @param elapsedNanos elapsed time in nanoseconds
- * @param children nested child sections
+ * @param children     nested child sections
  */
 public record ProfilerReportSection(
         String name,
