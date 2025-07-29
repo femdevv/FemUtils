@@ -12,6 +12,8 @@ import xyz.femdev.femutils.demo.DemoConfig;
 import xyz.femdev.femutils.java.config.ConfigHandle;
 import xyz.femdev.femutils.java.module.Module;
 import xyz.femdev.femutils.java.module.ModuleContext;
+import xyz.femdev.femutils.java.profiler.Profiler;
+import xyz.femdev.femutils.java.profiler.ProfilerSection;
 import xyz.femdev.femutils.paper.command.Argument;
 import xyz.femdev.femutils.paper.command.BuiltinParsers;
 import xyz.femdev.femutils.paper.command.CommandNode;
@@ -77,7 +79,6 @@ public class DemoModule implements Module {
 
     @Override
     public void stop() {
-        // Clean up any active subscriptions
         for (EventSubscription<?> sub : quitSubs.values()) {
             sub.unsubscribe();
         }
@@ -341,6 +342,42 @@ public class DemoModule implements Module {
                 })
                 .build();
 
+        CommandNode profilerDemo = CommandNode.literal("profiler")
+                .playerOnly()
+                .exec(ctx -> {
+                    Player p = ctx.player();
+                    p.sendMessage(MM.deserialize("<gray>Starting profiler demo..."));
+
+                    try (ProfilerSection root = Profiler.start("demo-root")) {
+                        Thread.sleep(50);
+
+                        try (ProfilerSection nested = Profiler.start("nested-task")) {
+                            Thread.sleep(20);
+                        }
+
+                        try (ProfilerSection another = Profiler.start("another-task")) {
+                            Thread.sleep(30);
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        p.sendMessage(MM.deserialize("<red>Profiler demo interrupted."));
+                        return;
+                    }
+
+                    for (ProfilerSection section : Profiler.getRootsForCurrentThread()) {
+                        p.sendMessage(MM.deserialize("<gold>" + section.getName() + ": "
+                                + String.format("%.3f ms", section.getElapsedNanos() / 1_000_000.0)));
+                        for (ProfilerSection child : section.getChildren()) {
+                            p.sendMessage(MM.deserialize("  <yellow>" + child.getName() + ": "
+                                    + String.format("%.3f ms", child.getElapsedNanos() / 1_000_000.0)));
+                        }
+                    }
+
+                    Profiler.reset();
+                    p.sendMessage(MM.deserialize("<green>Profiler demo complete."));
+                })
+                .build();
+
         CommandNode root = CommandNode.literal("demo")
                 .child(reload)
                 .child(ping)
@@ -354,6 +391,7 @@ public class DemoModule implements Module {
                 .child(paginatorCmd)
                 .child(animCmd)
                 .child(anvilCmd)
+                .child(profilerDemo)
                 .build();
 
         commands.registerRoot("demo", root);
