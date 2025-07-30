@@ -27,6 +27,21 @@ public final class ReflectMapper {
     public <T> T toObject(Object raw, Class<T> type) {
         if (raw == null) return null;
 
+        if (type.isPrimitive()
+                || type == Boolean.class
+                || type == Byte.class
+                || type == Short.class
+                || type == Integer.class
+                || type == Long.class
+                || type == Float.class
+                || type == Double.class
+                || type == Character.class
+                || type == String.class
+        ) {
+            //noinspection unchecked
+            return (T) raw;
+        }
+
         TypeSerializer<T> ser = registry.find(type);
         if (ser != null) return ser.deserialize(raw, this, type);
 
@@ -38,7 +53,6 @@ public final class ReflectMapper {
             //noinspection unchecked
             return (T) map(raw, Object.class, Object.class);
         }
-
         if (type.isRecord()) {
             return fromRecord(raw, type);
         }
