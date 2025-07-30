@@ -78,6 +78,11 @@ public final class SimpleYamlEngine implements ConfigHandle.Engine {
             return;
         }
 
+        if (isLeafType(type)) {
+            yaml.set(basePath, obj);
+            return;
+        }
+
         if (type.isRecord()) {
             for (var rc : type.getRecordComponents()) {
                 Object val = getValue(rc, obj);
@@ -90,8 +95,8 @@ public final class SimpleYamlEngine implements ConfigHandle.Engine {
 
         for (var f : type.getDeclaredFields()) {
             if (Modifier.isStatic(f.getModifiers())) continue;
-            f.setAccessible(true);
             try {
+                f.setAccessible(true);
                 Object val = f.get(obj);
                 String path = concat(basePath, f.getName());
                 commentIfPresent(yaml, path, f);
@@ -100,6 +105,18 @@ public final class SimpleYamlEngine implements ConfigHandle.Engine {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    /**
+     * Defines which types we should treat as “atomic” leaves in the YAML tree
+     */
+    private boolean isLeafType(Class<?> type) {
+        return type.isPrimitive()
+                || String.class.equals(type)
+                || Number.class.isAssignableFrom(type)
+                || Boolean.class.equals(type)
+                || Character.class.equals(type)
+                || type.isEnum();
     }
 
     private Object getValue(java.lang.reflect.RecordComponent rc, Object obj) {

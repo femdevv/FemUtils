@@ -89,7 +89,6 @@ public final class ConfigHandle<T> {
      */
     public interface Engine {
         <T> T load(Path path, Class<T> type, Supplier<T> defaults) throws IOException;
-
         void save(Path path, Object value) throws IOException;
     }
 }
