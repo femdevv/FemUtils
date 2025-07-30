@@ -24,11 +24,43 @@ public final class ReflectMapper {
     /**
      * Converts raw data into an object of the given type.
      */
+    @SuppressWarnings("unchecked")
     public <T> T toObject(Object raw, Class<T> type) {
-        if (raw == null) return null;
+        if (type.isPrimitive()) {
+            if (raw == null) {
+                if (type == boolean.class) return (T) Boolean.FALSE;
+                if (type == byte.class) return (T) Byte.valueOf((byte) 0);
+                if (type == short.class) return (T) Short.valueOf((short) 0);
+                if (type == int.class) return (T) Integer.valueOf(0);
+                if (type == long.class) return (T) Long.valueOf(0L);
+                if (type == float.class) return (T) Float.valueOf(0f);
+                if (type == double.class) return (T) Double.valueOf(0d);
+                if (type == char.class) return (T) Character.valueOf('\0');
+            }
+            if (type == boolean.class) {
+                Boolean boolVal = (raw instanceof Boolean b)
+                        ? b
+                        : Boolean.valueOf(Boolean.parseBoolean(raw.toString()));
+                return (T) boolVal;
+            }
+            if (raw instanceof Number num) {
+                if (type == byte.class) return (T) Byte.valueOf(num.byteValue());
+                if (type == short.class) return (T) Short.valueOf(num.shortValue());
+                if (type == int.class) return (T) Integer.valueOf(num.intValue());
+                if (type == long.class) return (T) Long.valueOf(num.longValue());
+                if (type == float.class) return (T) Float.valueOf(num.floatValue());
+                if (type == double.class) return (T) Double.valueOf(num.doubleValue());
+            }
+            if (type == char.class && raw instanceof String s && !s.isEmpty()) {
+                return (T) Character.valueOf(s.charAt(0));
+            }
+            return (T) raw;
+        }
 
-        if (type.isPrimitive()
-                || type == Boolean.class
+        if (raw == null) {
+            return null;
+        }
+        if (type == Boolean.class
                 || type == Byte.class
                 || type == Short.class
                 || type == Integer.class
@@ -38,19 +70,18 @@ public final class ReflectMapper {
                 || type == Character.class
                 || type == String.class
         ) {
-            //noinspection unchecked
             return (T) raw;
         }
 
         TypeSerializer<T> ser = registry.find(type);
-        if (ser != null) return ser.deserialize(raw, this, type);
+        if (ser != null) {
+            return ser.deserialize(raw, this, type);
+        }
 
         if (List.class.isAssignableFrom(type)) {
-            //noinspection unchecked
             return (T) list(raw, Object.class);
         }
         if (Map.class.isAssignableFrom(type)) {
-            //noinspection unchecked
             return (T) map(raw, Object.class, Object.class);
         }
         if (type.isRecord()) {
