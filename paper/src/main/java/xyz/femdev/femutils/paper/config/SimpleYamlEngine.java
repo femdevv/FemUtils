@@ -107,9 +107,6 @@ public final class SimpleYamlEngine implements ConfigHandle.Engine {
         }
     }
 
-    /**
-     * Defines which types we should treat as “atomic” leaves in the YAML tree
-     */
     private boolean isLeafType(Class<?> type) {
         return type.isPrimitive()
                 || String.class.equals(type)
